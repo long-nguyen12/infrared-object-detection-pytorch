@@ -75,7 +75,7 @@ class Trainer(object):
 
         self.train_loader = torch.utils.data.DataLoader(
             train_dataset,
-            batch_size=args.batchsize,
+            batch_size=args.batch_size,
             shuffle=True,
             pin_memory=True,
             drop_last=True,
