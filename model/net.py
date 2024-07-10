@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from backbones.mit import *
-from heads.fapn import *
+from .backbones import *
+from .heads import *
 
 
 class SegmentNet(nn.Module):
