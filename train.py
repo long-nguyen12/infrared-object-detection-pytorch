@@ -40,6 +40,11 @@ class Trainer(object):
         dataset = args.train_path.split("/")[-1]
         self.save_folder = f"snapshots/{dataset}"
 
+        if not os.path.exists(self.save_folder):
+            os.makedirs(self.save_folder, exist_ok=True)
+        else:
+            print("Save path existed")
+
         train_img_paths = []
         train_mask_paths = []
         train_img_paths = glob("{}/training/images/*".format(args.train_path))
@@ -96,7 +101,7 @@ class Trainer(object):
             drop_last=True,
         )
 
-        device = torch.device("cpu")
+        device = torch.device("cuda")
         self.device = device
 
         # Model
