@@ -16,7 +16,7 @@ import albumentations as A
 def parse_args():
     parser = ArgumentParser(description="Implement of model")
 
-    parser.add_argument("--train_path", type=str, default="/data/NUST-SIRST")
+    parser.add_argument("--train_path", type=str, default="data/NUST-SIRST")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--lr", type=float, default=1e-4)
@@ -106,7 +106,7 @@ class Trainer(object):
 
         # Optimizer and Scheduler
         params = model.parameters()
-        self.optimizer = torch.optim.Adam(params, args.init_lr)
+        self.optimizer = torch.optim.Adam(params, args.lr)
         self.scheduler = LR_Scheduler_Head(
             "poly", args.lr, args.epochs, len(self.train_loader), lr_step=10
         )
