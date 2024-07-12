@@ -19,7 +19,7 @@ class SegmentNet(nn.Module):
         self.output_2 = nn.Conv2d(128, 1, 1)
         self.output_3 = nn.Conv2d(128, 1, 1)
 
-        self.final = nn.Conv2d(4, 1, 3, 1, 1)
+        self.final = nn.Conv2d(5, 1, 3, 1, 1)
 
     def forward(self, x):
         enc_out = self.backbone(x)
@@ -46,7 +46,7 @@ class SegmentNet(nn.Module):
             mask3, size=x.size()[2:], mode="bilinear", align_corners=False
         )
 
-        output = self.final(torch.cat([mask0, mask1, mask2, mask3], dim=1))
+        output = self.final(torch.cat([mask0, mask1, mask2, mask3, global_mask], dim=1))
         return [mask0, mask1, mask2, mask3], output
 
 
