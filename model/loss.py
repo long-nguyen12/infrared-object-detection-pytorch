@@ -124,7 +124,7 @@ class SoftLoULoss(nn.Module):
         super(SoftLoULoss, self).__init__()
 
     def forward(self, pred, target):
-        pred = F.sigmoid(pred)
+        pred = torch.sigmoid(pred)
         smooth = 1
 
         intersection = pred * target

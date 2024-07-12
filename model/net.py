@@ -25,7 +25,7 @@ class SegmentNet(nn.Module):
         enc_out = self.backbone(x)
 
         sub_masks, global_mask = self.decoder(enc_out)
-
+        
         x_d1, x_d2, x_d3, x_d4 = sub_masks
 
         mask0 = self.output_0(x_d1)
@@ -44,6 +44,9 @@ class SegmentNet(nn.Module):
         )
         mask3 = F.interpolate(
             mask3, size=x.size()[2:], mode="bilinear", align_corners=False
+        )
+        global_mask = F.interpolate(
+            global_mask, size=x.size()[2:], mode="bilinear", align_corners=False
         )
 
         output = self.final(torch.cat([mask0, mask1, mask2, mask3, global_mask], dim=1))

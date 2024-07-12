@@ -16,7 +16,7 @@ import albumentations as A
 def parse_args():
     parser = ArgumentParser(description="Implement of model")
 
-    parser.add_argument("--train_path", type=str, default="data/NUST-SIRST")
+    parser.add_argument("--train_path", type=str, default="data/IRSTD-1k")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--lr", type=float, default=1e-4)
@@ -126,11 +126,13 @@ class Trainer(object):
         self.best_iou = 0
 
     def train(self, epoch):
-        self.model.train()
+        self.model.train()                
+
         tbar = tqdm(self.train_loader)
         losses = AverageMeter()
 
         for i, (data, mask) in enumerate(tbar):
+            self.scheduler(self.optimizer, i, epoch)
 
             data = data.to(self.device)
             labels = mask.to(self.device)
@@ -147,7 +149,7 @@ class Trainer(object):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
+            
             losses.update(loss.item(), pred.size(0))
             tbar.set_description("Epoch %d, loss %.4f" % (epoch, losses.avg))
 

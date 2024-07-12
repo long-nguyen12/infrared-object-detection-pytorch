@@ -47,7 +47,7 @@ class LR_Scheduler(object):
         self.warmup_iters = warmup_epochs * iters_per_epoch
         self.total_iters = (num_epochs - warmup_epochs) * iters_per_epoch
 
-    def __call__(self, optimizer, i, epoch, best_pred):
+    def __call__(self, optimizer, i, epoch):
         T = epoch * self.iters_per_epoch + i
         # warm up lr schedule
         if self.warmup_iters > 0 and T < self.warmup_iters:
