@@ -9,10 +9,10 @@ class SegmentNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.backbone = MiT("B0")
+        self.backbone = res2net50_v1b_26w_4s(pretrained=False)
         self.params = self.backbone.channels
 
-        self.decoder = FaPNHead(self.params, 128, 1)
+        self.decoder = UPerHead(self.params, 128, 1)
 
         self.output_0 = nn.Conv2d(128, 1, 1)
         self.output_1 = nn.Conv2d(128, 1, 1)
@@ -25,7 +25,7 @@ class SegmentNet(nn.Module):
         enc_out = self.backbone(x)
 
         sub_masks, global_mask = self.decoder(enc_out)
-        
+
         x_d1, x_d2, x_d3, x_d4 = sub_masks
 
         mask0 = self.output_0(x_d1)

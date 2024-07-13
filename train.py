@@ -117,7 +117,7 @@ class Trainer(object):
         )
 
         # Loss funcitons
-        self.loss_fun = SoftLoULoss()
+        self.loss_fun = StructureLoss()
 
         # Metrics
         self.PD_FA = PD_FA(1, 10, args.base_size)
@@ -126,7 +126,7 @@ class Trainer(object):
         self.best_iou = 0
 
     def train(self, epoch):
-        self.model.train()                
+        self.model.train()
 
         tbar = tqdm(self.train_loader)
         losses = AverageMeter()
@@ -149,7 +149,7 @@ class Trainer(object):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            
+
             losses.update(loss.item(), pred.size(0))
             tbar.set_description("Epoch %d, loss %.4f" % (epoch, losses.avg))
 
