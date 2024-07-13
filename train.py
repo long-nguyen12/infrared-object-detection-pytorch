@@ -19,10 +19,11 @@ def parse_args():
     parser.add_argument("--train_path", type=str, default="data/IRSTD-1k")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
-    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--lr", type=float, default=0.05)
 
     parser.add_argument("--base-size", type=int, default=256)
     parser.add_argument("--crop-size", type=int, default=256)
+    parser.add_argument("--warm-epoch", type=int, default=5)
 
     parser.add_argument("--mode", type=str, default="train")
     args = parser.parse_args()
@@ -45,104 +46,68 @@ class Trainer(object):
         else:
             print("Save path existed")
 
-        train_img_paths = []
-        train_mask_paths = []
-        train_img_paths = glob("{}/training/images/*".format(args.train_path))
-        train_mask_paths = glob("{}/training/masks/*".format(args.train_path))
-        train_img_paths.sort()
-        train_mask_paths.sort()
+        trainset = IRSTD_Dataset(args, mode="train")
+        valset = IRSTD_Dataset(args, mode="val")
 
-        test_img_paths = []
-        test_mask_paths = []
-        test_img_paths = glob("{}/test/images/*".format(args.train_path))
-        test_mask_paths = glob("{}/test/masks/*".format(args.train_path))
-        test_img_paths.sort()
-        test_mask_paths.sort()
-
-        transform = A.Compose(
-            [
-                A.Resize(height=256, width=256),
-                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ]
+        self.train_loader = Data.DataLoader(
+            trainset, args.batch_size, shuffle=True, drop_last=True
         )
-        mask_transform = A.Compose(
-            [
-                A.Resize(height=256, width=256),
-            ]
-        )
-
-        train_dataset = Dataset(
-            train_img_paths,
-            train_mask_paths,
-            transform=transform,
-            mask_transform=mask_transform,
-        )
-
-        self.train_loader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            pin_memory=True,
-            drop_last=True,
-        )
-
-        test_dataset = Dataset(
-            test_img_paths,
-            test_mask_paths,
-            transform=transform,
-            mask_transform=mask_transform,
-        )
-
-        self.val_loader = torch.utils.data.DataLoader(
-            test_dataset,
-            batch_size=1,
-            shuffle=False,
-            pin_memory=True,
-            drop_last=True,
-        )
-
+        self.val_loader = Data.DataLoader(valset, 1, drop_last=False)
         device = torch.device("cuda")
         self.device = device
 
         # Model
+        # model = MSHNet(3)
         model = SegmentNet()
         model.to(device)
         self.model = model
 
         # Optimizer and Scheduler
         params = model.parameters()
-        self.optimizer = torch.optim.Adam(params, args.lr)
+        # self.optimizer = torch.optim.Adam(params, args.lr)
+        self.optimizer = torch.optim.Adagrad(
+            filter(lambda p: p.requires_grad, self.model.parameters()), lr=args.lr
+        )
+
         self.scheduler = LR_Scheduler_Head(
             "poly", args.lr, args.epochs, len(self.train_loader), lr_step=10
         )
 
         # Loss funcitons
-        self.loss_fun = StructureLoss()
+        self.loss_fun = SLSIoULoss()
 
         # Metrics
         self.PD_FA = PD_FA(1, 10, args.base_size)
         self.mIoU = mIoU(1)
         self.ROC = ROCMetric(1, 10)
         self.best_iou = 0
+        self.warm_epoch = args.warm_epoch
+        self.down = nn.MaxPool2d(2, 2)
 
     def train(self, epoch):
         self.model.train()
 
         tbar = tqdm(self.train_loader)
         losses = AverageMeter()
+        tag = False
 
         for i, (data, mask) in enumerate(tbar):
-            self.scheduler(self.optimizer, i, epoch)
+            # self.scheduler(self.optimizer, i, epoch)
 
             data = data.to(self.device)
             labels = mask.to(self.device)
 
-            masks, pred = self.model(data)
+            if epoch > self.warm_epoch:
+                tag = True
+
+            masks, pred = self.model(data, tag)
             loss = 0
 
-            loss = loss + self.loss_fun(pred, labels)
+            loss = loss + self.loss_fun(pred, labels, self.warm_epoch, epoch)
             for j in range(len(masks)):
-                loss = loss + self.loss_fun(masks[j], labels)
+                # if j > 0:
+                #     labels = self.down(labels)
+                loss = loss + self.loss_fun(masks[j], labels, self.warm_epoch, epoch)
 
             loss = loss / (len(masks) + 1)
 
@@ -158,13 +123,17 @@ class Trainer(object):
         self.mIoU.reset()
         self.PD_FA.reset()
         tbar = tqdm(self.val_loader)
+        tag = False
         with torch.no_grad():
             for i, (data, mask) in enumerate(tbar):
 
                 data = data.to(self.device)
                 mask = mask.to(self.device)
 
-                _, pred = self.model(data)
+                if epoch > self.warm_epoch:
+                    tag = True
+
+                _, pred = self.model(data, tag)
 
                 self.mIoU.update(pred, mask)
                 self.PD_FA.update(pred, mask)

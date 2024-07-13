@@ -191,7 +191,7 @@ class Res2Net(nn.Module):
 
 
 def custom_res2net50_v1b(pretrained=False, **kwargs):
-    model = Res2Net(Bottle2neck, [1, 1, 1, 1], baseWidth=26, scale=4, **kwargs)
+    model = Res2Net(Bottle2neck, [2, 2, 2, 2], baseWidth=26, scale=4, **kwargs)
     return model
 
 
