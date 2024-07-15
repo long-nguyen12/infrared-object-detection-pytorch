@@ -96,14 +96,6 @@ class Trainer(object):
         tag = False
 
         for i, (data, mask) in enumerate(tbar):
-            # if epoch <= 1:
-            #     self.optimizer.param_groups[0]["lr"] = (
-            #         (epoch * i) / (1.0 * self.total_step) * args.lr
-            #     )
-            # else:
-            #     self.lr_scheduler.step()
-            # self.scheduler(self.optimizer, i, epoch)
-
             data = data.to(self.device)
             labels = mask.to(self.device)
 

@@ -61,3 +61,17 @@ class BNPReLU(nn.Module):
         output = self.acti(output)
 
         return output
+
+class DropPath(nn.Module):
+    def __init__(self, p: float = None):
+        super().__init__()
+        self.p = p
+
+    def forward(self, x):
+        if self.p == 0. or not self.training:
+            return x
+        kp = 1 - self.p
+        shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+        random_tensor = kp + torch.rand(shape, dtype=x.dtype, device=x.device)
+        random_tensor.floor_()  # binarize
+        return x.div(kp) * random_tensor
