@@ -16,7 +16,7 @@ import albumentations as A
 def parse_args():
     parser = ArgumentParser(description="Implement of model")
 
-    parser.add_argument("--train_path", type=str, default="data/IRSTD-1k")
+    parser.add_argument("--train_path", type=str, default="data/NUST-SIRST")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--lr", type=float, default=0.05)
@@ -64,13 +64,18 @@ class Trainer(object):
 
         # Optimizer and Scheduler
         params = model.parameters()
+
+        self.total_step = len(self.train_loader)
+
         # self.optimizer = torch.optim.Adam(params, args.lr)
         self.optimizer = torch.optim.Adagrad(
             filter(lambda p: p.requires_grad, self.model.parameters()), lr=args.lr
         )
 
-        self.scheduler = LR_Scheduler_Head(
-            "poly", args.lr, args.epochs, len(self.train_loader), lr_step=10
+        self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer,
+            T_max=len(self.train_loader) * args.epochs,
+            eta_min=args.lr / 1000,
         )
 
         # Loss funcitons
@@ -92,6 +97,12 @@ class Trainer(object):
         tag = False
 
         for i, (data, mask) in enumerate(tbar):
+            # if epoch <= 1:
+            #     self.optimizer.param_groups[0]["lr"] = (
+            #         (epoch * i) / (1.0 * self.total_step) * args.lr
+            #     )
+            # else:
+            #     self.lr_scheduler.step()
             # self.scheduler(self.optimizer, i, epoch)
 
             data = data.to(self.device)

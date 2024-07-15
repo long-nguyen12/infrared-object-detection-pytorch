@@ -3,6 +3,8 @@ import math
 import torch.utils.model_zoo as model_zoo
 import torch
 import torch.nn.functional as F
+from model.modules.cbam import CBAM
+from model.modules.cfp import CFPModule
 
 __all__ = ["Res2Net", "res2net50_v1b", "res2net101_v1b"]
 
@@ -113,6 +115,7 @@ class Res2Net(nn.Module):
         self.inplanes = 64
         super(Res2Net, self).__init__()
         self.baseWidth = baseWidth
+        self.channels = [64, 128, 256, 512]
         self.scale = scale
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -123,7 +126,11 @@ class Res2Net(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        self.channels = [64, 128, 256, 512]
+        self.cbam_0 = CBAM(64)
+        self.cbam_1 = CBAM(128)
+        self.cbam_2 = CBAM(256)
+        self.cbam_3 = CBAM(512)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
@@ -179,12 +186,16 @@ class Res2Net(nn.Module):
         x = self.maxpool(x)
 
         x = self.layer1(x)
+        x = self.cbam_0(x)
         outs.append(x)
         x = self.layer2(x)
+        x = self.cbam_1(x)
         outs.append(x)
         x = self.layer3(x)
+        x = self.cbam_2(x)
         outs.append(x)
         x = self.layer4(x)
+        x = self.cbam_3(x)
         outs.append(x)
 
         return outs
