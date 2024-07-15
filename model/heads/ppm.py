@@ -1,6 +1,7 @@
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
+from model.modules.conv_layers import Conv
 
 
 class ConvModule(nn.Sequential):
@@ -17,10 +18,24 @@ class PPM(nn.Module):
 
     def __init__(self, c1, c2=128, scales=(1, 2, 3, 6)):
         super().__init__()
+        # self.stages = nn.ModuleList(
+        #     [
+        #         nn.Sequential(nn.AdaptiveAvgPool2d(scale), ConvModule(c1, c2, 1))
+        #         for scale in scales
+        #     ]
+        # )
         self.stages = nn.ModuleList(
             [
-                nn.Sequential(nn.AdaptiveAvgPool2d(scale), ConvModule(c1, c2, 1))
-                for scale in scales
+                ConvModule(
+                    c1,
+                    c2,
+                    (3, 3),
+                    1,
+                    p=(1 * d + 1, 1 * d + 1),
+                    d=(d + 1, d + 1),
+                    g=c2,
+                )
+                for d in scales
             ]
         )
 

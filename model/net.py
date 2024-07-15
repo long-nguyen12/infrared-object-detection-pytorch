@@ -116,20 +116,6 @@ class SegmentNet(nn.Module):
 
         self.final = nn.Conv2d(5, 1, 3, 1, 1)
 
-        self.apply(self._init_weights)
-
-    def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.Conv2d):
-            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-            fan_out //= m.groups
-            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
-
     def forward(self, x, warm_flag):
         enc_out = self.backbone(x)
         x0, x1, x2, x3 = enc_out
@@ -165,7 +151,7 @@ class SegmentNet(nn.Module):
             output = self.final(
                 torch.cat([mask0, mask1, mask2, mask3, global_mask], dim=1)
             )
-            return [mask0, mask1, mask2, mask3], output
+            return [mask0, mask1, mask2, mask3, global_mask], output
 
         else:
             global_mask = F.interpolate(

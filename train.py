@@ -16,7 +16,7 @@ import albumentations as A
 def parse_args():
     parser = ArgumentParser(description="Implement of model")
 
-    parser.add_argument("--train_path", type=str, default="data/NUST-SIRST")
+    parser.add_argument("--train_path", type=str, default="data/IRSTD-1k")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--lr", type=float, default=0.05)
@@ -87,7 +87,6 @@ class Trainer(object):
         self.ROC = ROCMetric(1, 10)
         self.best_iou = 0
         self.warm_epoch = args.warm_epoch
-        self.down = nn.MaxPool2d(2, 2)
 
     def train(self, epoch):
         self.model.train()
@@ -116,8 +115,6 @@ class Trainer(object):
 
             loss = loss + self.loss_fun(pred, labels, self.warm_epoch, epoch)
             for j in range(len(masks)):
-                # if j > 0:
-                #     labels = self.down(labels)
                 loss = loss + self.loss_fun(masks[j], labels, self.warm_epoch, epoch)
 
             loss = loss / (len(masks) + 1)
@@ -128,6 +125,8 @@ class Trainer(object):
 
             losses.update(loss.item(), pred.size(0))
             tbar.set_description("Epoch %d, loss %.4f" % (epoch, losses.avg))
+            
+        self.lr_scheduler.step()
 
     def test(self, epoch):
         self.model.eval()
