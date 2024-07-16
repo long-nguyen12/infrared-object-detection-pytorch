@@ -131,7 +131,7 @@ class SegmentNet(nn.Module):
             mask2 = self.output_2(x_d3)
             mask3 = self.output_3(x_d4)
 
-            global_mask = self.cfr(global_mask)
+            # global_mask = self.cfr(global_mask)
 
             mask0 = F.interpolate(
                 mask0, size=x.size()[2:], mode="bicubic", align_corners=False
