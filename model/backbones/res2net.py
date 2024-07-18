@@ -188,12 +188,15 @@ class Res2Net(nn.Module):
         x = self.layer1(x)
         x = self.cbam_0(x)
         outs.append(x)
+
         x = self.layer2(x)
         x = self.cbam_1(x)
         outs.append(x)
+
         x = self.layer3(x)
         x = self.cbam_2(x)
         outs.append(x)
+
         x = self.layer4(x)
         x = self.cbam_3(x)
         outs.append(x)

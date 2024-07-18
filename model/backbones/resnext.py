@@ -92,6 +92,7 @@ class ResNeXt(nn.Module):
         self.inplanes = 64
         self.output_size = 64
 
+        self.channels = [256, 512, 1024, 2048]
         self.conv1 = nn.Conv2d(3, 64, 7, 2, 3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
@@ -101,10 +102,10 @@ class ResNeXt(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], 2)
         self.layer4 = self._make_layer(block, 512, layers[3], 2)
 
-        self.cbam_0 = CBAM(64)
-        self.cbam_1 = CBAM(128)
-        self.cbam_2 = CBAM(256)
-        self.cbam_3 = CBAM(512)
+        self.cbam_0 = CBAM(256)
+        self.cbam_1 = CBAM(512)
+        self.cbam_2 = CBAM(1024)
+        self.cbam_3 = CBAM(2048)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -166,12 +167,15 @@ class ResNeXt(nn.Module):
         x = self.layer1(x)
         x = self.cbam_0(x)
         outs.append(x)
+        
         x = self.layer2(x)
         x = self.cbam_1(x)
         outs.append(x)
+        
         x = self.layer3(x)
         x = self.cbam_2(x)
         outs.append(x)
+        
         x = self.layer4(x)
         x = self.cbam_3(x)
         outs.append(x)
