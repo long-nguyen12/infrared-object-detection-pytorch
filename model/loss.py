@@ -24,7 +24,7 @@ def SoftIoULoss(pred, target):
     return loss
 
 
-def Dice(pred, target, warm_epoch=1, epoch=1, layer=0):
+def Dice(pred, target):
     pred = torch.sigmoid(pred)
 
     smooth = 1
@@ -41,6 +41,17 @@ def Dice(pred, target, warm_epoch=1, epoch=1, layer=0):
     loss = 1 - loss.mean()
 
     return loss
+
+
+class DiceIoULoss(nn.Module):
+    def __init__(self) -> None:
+        super(DiceIoULoss, self).__init__()
+
+    def forward(self, pred, target, warmup=None, ep=None):
+        iou_loss = SoftIoULoss(pred, target)
+        # dice_loss = Dice(pred, target)
+        # loss = iou_loss + dice_loss
+        return iou_loss
 
 
 class SLSIoULoss(nn.Module):

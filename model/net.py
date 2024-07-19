@@ -55,9 +55,6 @@ class CrossAttention(nn.Module):
 
         out = x1 * out + x2 * out
 
-        # x1 = self.aa_1(x1)
-        # x2 = self.aa_2(x2)
-        # x1 = self.conv(x1)
         return out
 
 
@@ -65,13 +62,12 @@ class SegmentNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # self.backbone = custom_res2net50_v1b(pretrained=False)
-        self.backbone = resnext_custom()
+        self.backbone = custom_res2net50_v1b(pretrained=False)
         self.params = self.backbone.channels
 
-        self.cross_1 = CrossAttention(256, 512)
-        self.cross_2 = CrossAttention(512, 1024)
-        self.cross_3 = CrossAttention(1024, 2048)
+        # self.cross_1 = CrossAttention(256, 512)
+        # self.cross_2 = CrossAttention(512, 1024)
+        # self.cross_3 = CrossAttention(1024, 2048)
 
         self.decoder = UPerHead(self.params, 128, 1)
 
@@ -86,9 +82,9 @@ class SegmentNet(nn.Module):
         enc_out = self.backbone(x)
         x0, x1, x2, x3 = enc_out
 
-        x1 = self.cross_1(x0, x1)
-        x2 = self.cross_2(x1, x2)
-        x3 = self.cross_3(x2, x3)
+        # x1 = self.cross_1(x0, x1)
+        # x2 = self.cross_2(x1, x2)
+        # x3 = self.cross_3(x2, x3)
 
         sub_masks, global_mask = self.decoder([x0, x1, x2, x3])
 

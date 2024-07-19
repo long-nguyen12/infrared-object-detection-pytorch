@@ -167,15 +167,15 @@ class ResNeXt(nn.Module):
         x = self.layer1(x)
         x = self.cbam_0(x)
         outs.append(x)
-        
+
         x = self.layer2(x)
         x = self.cbam_1(x)
         outs.append(x)
-        
+
         x = self.layer3(x)
         x = self.cbam_2(x)
         outs.append(x)
-        
+
         x = self.layer4(x)
         x = self.cbam_3(x)
         outs.append(x)
@@ -187,7 +187,7 @@ def resnext_custom(baseWidth=26, cardinality=32):
     """
     Construct ResNeXt-50.
     """
-    model = ResNeXt(baseWidth, cardinality, [1, 1, 1, 1], 1000)
+    model = ResNeXt(baseWidth, cardinality, [3, 4, 6, 3], 1000)
     return model
 
 

@@ -46,7 +46,7 @@ class PPM(nn.Module):
         for stage in self.stages:
             outs.append(
                 F.interpolate(
-                    stage(x), size=x.shape[-2:], mode="bilinear", align_corners=True
+                    stage(x), size=x.shape[-2:], mode="bicubic", align_corners=True
                 )
             )
 
