@@ -79,7 +79,7 @@ class Trainer(object):
         )
         # self.lr_scheduler.step()
         # Loss funcitons
-        self.loss_fun = SLSIoULoss()
+        self.loss_fun = SoftLoULoss()
 
         # Metrics
         self.PD_FA = PD_FA(1, 10, args.base_size)
