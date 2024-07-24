@@ -109,14 +109,14 @@ class RefUnet(nn.Module):
 class CrossAttention(nn.Module):
     def __init__(self, lower_c, higher_c) -> None:
         super().__init__()
-        self.aa_1 = ECA(lower_c)
-        self.aa_2 = ECA(higher_c)
-        self.conv = Conv(lower_c, higher_c, 1, 1, 1)
+        self.aa_1 = AA_kernel(lower_c, lower_c)
+        self.aa_2 = AA_kernel(higher_c, lower_c)
+        self.conv = Conv(2 * lower_c, lower_c, 1, 1, 1)
 
         self.up = nn.Upsample(scale_factor=2, mode="bilinear")
         self.down = nn.Sequential(
             nn.Conv2d(
-                in_channels=higher_c,
+                in_channels=2 * lower_c,
                 out_channels=lower_c,
                 kernel_size=1,
                 groups=lower_c,
@@ -126,17 +126,13 @@ class CrossAttention(nn.Module):
         )
 
     def forward(self, x1, x2):
-        # x1 = self.conv(x1)
-        # x1 = F.interpolate(x1, size=x2.size()[2:], mode="bilinear")
-        # x1 = self.aa_1()
+        x2 = F.interpolate(x2, size=x1.size()[2:], mode="bilinear")
         x1 = self.aa_1(x1)
         x2 = self.aa_2(x2)
-        
-        x2 = self.down(x2)
-        x2 = F.interpolate(x2, size=x1.size()[2:], mode="bilinear")
-        
-        out = torch.cat([x1, x2], dim=1)
 
+        x = torch.cat([x1, x2], dim=1)
+        x = self.down(x)
+        out = x1 * x2 * x
         return out
 
 
@@ -152,7 +148,7 @@ class SegmentNet(nn.Module):
         # self.cross_3 = CrossAttention(256, 512)
 
         self.decoder = UPerHead(self.params, 128, 1)
-        
+
         self.refine_0 = RefUnet(1, 64)
         self.refine_1 = RefUnet(1, 64)
         self.refine_2 = RefUnet(1, 64)
@@ -185,7 +181,7 @@ class SegmentNet(nn.Module):
             mask1 = self.output_1(x_d2)
             mask2 = self.output_2(x_d3)
             mask3 = self.output_3(x_d4)
-            
+
             mask0 = self.refine_0(mask0)
             mask1 = self.refine_1(mask1)
             mask2 = self.refine_2(mask2)
