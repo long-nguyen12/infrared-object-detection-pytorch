@@ -16,7 +16,7 @@ model_urls = {
 
 
 class Bottle2neck(nn.Module):
-    expansion = 4
+    expansion = 1
 
     def __init__(
         self,
@@ -66,6 +66,8 @@ class Bottle2neck(nn.Module):
             width * scale, planes * self.expansion, kernel_size=1, bias=False
         )
         self.bn3 = nn.BatchNorm2d(planes * self.expansion)
+        
+        self.cbam = CBAM(planes * self.expansion)
 
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -101,6 +103,8 @@ class Bottle2neck(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
+        
+        out = self.cbam(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -117,7 +121,7 @@ class Res2Net(nn.Module):
         self.inplanes = 64
         super(Res2Net, self).__init__()
         self.baseWidth = baseWidth
-        self.channels = [256, 512, 1024, 2048]
+        self.channels = [64, 128, 256, 512]
         self.scale = scale
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -128,10 +132,10 @@ class Res2Net(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        self.cbam_0 = CBAM(256)
-        self.cbam_1 = CBAM(512)
-        self.cbam_2 = CBAM(1024)
-        self.cbam_3 = CBAM(2048)
+        # self.cbam_0 = CBAM(64)
+        # self.cbam_1 = CBAM(128)
+        # self.cbam_2 = CBAM(256)
+        # self.cbam_3 = CBAM(512)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -188,19 +192,19 @@ class Res2Net(nn.Module):
         x = self.maxpool(x)
 
         x = self.layer1(x)
-        x = self.cbam_0(x)
+        # x = self.cbam_0(x)
         outs.append(x)
 
         x = self.layer2(x)
-        x = self.cbam_1(x)
+        # x = self.cbam_1(x)
         outs.append(x)
 
         x = self.layer3(x)
-        x = self.cbam_2(x)
+        # x = self.cbam_2(x)
         outs.append(x)
 
         x = self.layer4(x)
-        x = self.cbam_3(x)
+        # x = self.cbam_3(x)
         outs.append(x)
 
         return outs
