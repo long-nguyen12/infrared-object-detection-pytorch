@@ -43,7 +43,7 @@ class IRSTD_Dataset(Data.Dataset):
     def __getitem__(self, i):
         name = self.names[i]
         img_path = osp.join(self.imgs_dir, name + ".png")
-        label_path = osp.join(self.label_dir, name + ".png")
+        label_path = osp.join(self.label_dir, name + "_pixels0.png")
 
         img = Image.open(img_path).convert("RGB")
         mask = Image.open(label_path)
