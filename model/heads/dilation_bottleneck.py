@@ -1,7 +1,5 @@
 import torch
-from torch import nn, Tensor
-from torch.nn import functional as F
-from model.modules.conv_layers import Conv
+from torch import Tensor, nn
 
 
 class ConvModule(nn.Sequential):
@@ -13,17 +11,11 @@ class ConvModule(nn.Sequential):
         )
 
 
-class PPM(nn.Module):
+class DilationBottleneck(nn.Module):
     """Pyramid Pooling Module in PSPNet"""
 
     def __init__(self, c1, c2=128, scales=(1, 2, 3, 6)):
         super().__init__()
-        # self.stages = nn.ModuleList(
-        #     [
-        #         nn.Sequential(nn.AdaptiveAvgPool2d(scale), ConvModule(c1, c2, 1))
-        #         for scale in scales
-        #     ]
-        # )
         self.stages = nn.ModuleList(
             [
                 ConvModule(
@@ -44,17 +36,8 @@ class PPM(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         outs = []
         for stage in self.stages:
-            outs.append(
-                stage(x)
-            )
+            outs.append(stage(x))
 
         outs = [x] + outs[::-1]
         out = self.bottleneck(torch.cat(outs, dim=1))
         return out
-
-
-if __name__ == "__main__":
-    model = PPM(512, 128)
-    x = torch.randn(2, 512, 7, 7)
-    y = model(x)
-    print(y.shape)  # [2, 128, 7, 7]

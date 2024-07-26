@@ -69,7 +69,7 @@ class SegmentNet(nn.Module):
         self.cross_2 = CrossAttention(128, 256)
         self.cross_3 = CrossAttention(256, 512)
 
-        self.decoder = UPerHead(self.params, 128, 1)
+        self.decoder = DilationHead(self.params, 128, 1)
 
         self.output_0 = nn.Conv2d(128, 1, 1)
         self.output_1 = nn.Conv2d(128, 1, 1)

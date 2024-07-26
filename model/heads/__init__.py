@@ -1,4 +1,4 @@
 from .fapn import FaPNHead
-from .uperhead import UPerHead
+from .dilation_head import DilationHead
 
-__all__ = ["FaPNHead", "UPerHead"]
+__all__ = ["FaPNHead", "DilationHead"]
