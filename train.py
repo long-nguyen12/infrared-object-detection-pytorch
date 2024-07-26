@@ -16,7 +16,7 @@ import albumentations as A
 def parse_args():
     parser = ArgumentParser(description="Implement of model")
 
-    parser.add_argument("--train_path", type=str, default="data/SIRST")
+    parser.add_argument("--train_path", type=str, default="data/IRSTD-1k")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=400)
     parser.add_argument("--lr", type=float, default=0.05)
@@ -28,6 +28,23 @@ def parse_args():
     parser.add_argument("--mode", type=str, default="train")
     args = parser.parse_args()
     return args
+
+
+epsilon = 1e-7
+
+
+def recall_m(y_true, y_pred):
+    true_positives = torch.sum(torch.round(torch.clip(y_true * y_pred, 0, 1)))
+    possible_positives = torch.sum(torch.round(torch.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + epsilon)
+    return recall
+
+
+def precision_m(y_true, y_pred):
+    true_positives = torch.sum(torch.round(torch.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = torch.sum(torch.round(torch.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + epsilon)
+    return precision
 
 
 class Trainer(object):
@@ -57,7 +74,6 @@ class Trainer(object):
         self.device = device
 
         # Model
-        # model = MSHNet(3)
         model = SegmentNet()
         model.to(device)
         self.model = model
@@ -79,7 +95,7 @@ class Trainer(object):
         )
         # self.lr_scheduler.step()
         # Loss funcitons
-        self.loss_fun = SoftLoULoss()
+        self.loss_fun = SoftIoUL1NromLoss()
 
         # Metrics
         self.PD_FA = PD_FA(1, 10, args.base_size)
@@ -90,7 +106,7 @@ class Trainer(object):
 
         if args.mode == "test":
             weight = torch.load(f"{self.save_folder}/best.pth")
-            self.model.load_state_dict(weight)
+            self.model.load_state_dict(weight, strict=False)
             self.warm_epoch = -1
 
     def train(self, epoch):
@@ -105,14 +121,14 @@ class Trainer(object):
             labels = mask.to(self.device)
 
             if epoch > self.warm_epoch:
-                tag = True
+                tag = False
 
             masks, pred = self.model(data, tag)
             loss = 0
 
-            loss = loss + self.loss_fun(pred, labels, self.warm_epoch, epoch)
+            loss = loss + self.loss_fun(pred, labels)
             for j in range(len(masks)):
-                loss = loss + self.loss_fun(masks[j], labels, self.warm_epoch, epoch)
+                loss = loss + self.loss_fun(masks[j], labels)
 
             loss = loss / (len(masks) + 1)
 
@@ -131,6 +147,8 @@ class Trainer(object):
         self.PD_FA.reset()
         tbar = tqdm(self.val_loader)
         tag = False
+        recall = 0
+        precision = 0
         with torch.no_grad():
             for i, (data, mask) in enumerate(tbar):
 
@@ -138,7 +156,7 @@ class Trainer(object):
                 mask = mask.to(self.device)
 
                 if epoch > self.warm_epoch:
-                    tag = True
+                    tag = False
 
                 _, pred = self.model(data, tag)
 
@@ -146,11 +164,15 @@ class Trainer(object):
                 self.PD_FA.update(pred, mask)
                 self.ROC.update(pred, mask)
                 _, mean_IoU = self.mIoU.get()
-
+                
+                precision += precision_m(mask, pred)
+                recall += recall_m(mask, pred)
+                
                 tbar.set_description("Epoch %d, IoU %.4f" % (epoch, mean_IoU))
             FA, PD = self.PD_FA.get(len(self.val_loader))
             _, mean_IoU = self.mIoU.get()
-            ture_positive_rate, false_positive_rate, _, _ = self.ROC.get()
+            recall = recall / len(self.val_loader)
+            precision = precision / len(self.val_loader)
 
             if self.mode == "train":
                 if mean_IoU > self.best_iou:
@@ -181,6 +203,8 @@ class Trainer(object):
                 print("mIoU: " + str(mean_IoU) + "\n")
                 print("Pd: " + str(PD[0]) + "\n")
                 print("Fa: " + str(FA[0] * 1000000) + "\n")
+                print("Recall: " + str(recall) + "\n")
+                print("Precision: " + str(precision) + "\n")
 
 
 if __name__ == "__main__":

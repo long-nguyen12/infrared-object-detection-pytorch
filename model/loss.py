@@ -79,14 +79,15 @@ class SLSIoULoss(nn.Module):
         )
         lloss = LLoss(pred, target)
 
-        if epoch > warm_epoch:
-            siou_loss = alpha * loss
-            if with_shape:
-                loss = 1 - siou_loss.mean() + lloss
-            else:
-                loss = 1 - siou_loss.mean()
-        else:
-            loss = 1 - loss.mean()
+        # if epoch > warm_epoch:
+        #     siou_loss = alpha * loss
+        #     if with_shape:
+        #         loss = 1 - siou_loss.mean() + lloss
+        #     else:
+        #         loss = 1 - siou_loss.mean()
+        # else:
+        #     loss = 1 - loss.mean()
+        loss = 1 - loss.mean()
         return loss
 
 
@@ -136,7 +137,7 @@ class SoftLoULoss(nn.Module):
 
     def forward(self, pred, target):
         pred = torch.sigmoid(pred)
-        smooth = 1
+        smooth = 0.0
 
         intersection = pred * target
 
