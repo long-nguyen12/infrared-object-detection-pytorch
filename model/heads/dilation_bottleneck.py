@@ -12,8 +12,6 @@ class ConvModule(nn.Sequential):
 
 
 class DilationBottleneck(nn.Module):
-    """Pyramid Pooling Module in PSPNet"""
-
     def __init__(self, c1, c2=128, scales=(1, 2, 3, 6)):
         super().__init__()
         self.stages = nn.ModuleList(

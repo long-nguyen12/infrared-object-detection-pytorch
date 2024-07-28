@@ -14,10 +14,11 @@ from model.modules.conv_layers import Conv
 class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
         super(SpatialAttention, self).__init__()
-        assert kernel_size in (3, 7), 'kernel size must be 3 or 7'
+        assert kernel_size in (3, 7), "kernel size must be 3 or 7"
         padding = 3 if kernel_size == 7 else 1
         self.conv1 = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
         self.sigmoid = nn.Sigmoid()
+
     def forward(self, x):
         avg_out = torch.mean(x, dim=1, keepdim=True)
         max_out, _ = torch.max(x, dim=1, keepdim=True)
@@ -48,7 +49,7 @@ class CrossAttention(nn.Module):
     def forward(self, x1, x2):
         x2 = self.conv(x2)
         x2 = F.interpolate(x2, size=x1.size()[2:], mode="bilinear")
-        
+
         # x1 = self.aa_1(x1) * x1
         # x2 = self.aa_2(x2) * x2
 
@@ -65,11 +66,11 @@ class SegmentNet(nn.Module):
         self.backbone = custom_res2net50_v1b(pretrained=False)
         self.params = self.backbone.channels
 
-        self.cross_1 = CrossAttention(64, 128)
-        self.cross_2 = CrossAttention(128, 256)
-        self.cross_3 = CrossAttention(256, 512)
+        # self.cross_1 = CrossAttention(64, 128)
+        # self.cross_2 = CrossAttention(128, 256)
+        # self.cross_3 = CrossAttention(256, 512)
 
-        self.decoder = DilationHead(self.params, 128, 1)
+        self.decoder = DilationHead(self.params, 128)
 
         self.output_0 = nn.Conv2d(128, 1, 1)
         self.output_1 = nn.Conv2d(128, 1, 1)
@@ -81,7 +82,7 @@ class SegmentNet(nn.Module):
     def forward(self, x, warm_flag):
         enc_out = self.backbone(x)
         x0, x1, x2, x3 = enc_out
-        
+
         # _x0 = self.cross_1(x0, x1)
         # _x1 = self.cross_2(x1, x2)
         # _x2 = self.cross_3(x2, x3)
@@ -90,8 +91,6 @@ class SegmentNet(nn.Module):
         _x2 = x2
 
         sub_masks, global_mask = self.decoder([_x0, _x1, _x2, x3])
-
-        # global_mask = self.refine(global_mask)
 
         if warm_flag:
 
@@ -123,14 +122,14 @@ class SegmentNet(nn.Module):
             return [mask0, mask1, mask2, mask3, global_mask], output
 
         else:
-            
+
             x_d1, x_d2, x_d3, x_d4 = sub_masks
 
             mask0 = self.output_0(x_d1)
             mask1 = self.output_1(x_d2)
             mask2 = self.output_2(x_d3)
             mask3 = self.output_3(x_d4)
-            
+
             mask0 = F.interpolate(
                 mask0, size=x.size()[2:], mode="bilinear", align_corners=False
             )
@@ -146,9 +145,9 @@ class SegmentNet(nn.Module):
             global_mask = F.interpolate(
                 global_mask, size=x.size()[2:], mode="bilinear", align_corners=False
             )
-            
-            return [mask0, mask1, mask2, mask3], global_mask
-        
+
+            return [mask0], global_mask
+            # return [mask0, mask1, mask2, mask3], global_mask
 
 
 if __name__ == "__main__":

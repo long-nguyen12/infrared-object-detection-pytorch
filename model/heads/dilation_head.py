@@ -51,7 +51,8 @@ class DilationHead(nn.Module):
     def __init__(self, in_channels, channel=128, scales=(1, 2, 3, 6)):
         super().__init__()
         # DilationBottleneck Module
-        self.bottleneck = DilationBottleneck(in_channels[-1], channel, scales)
+        # self.dilation_bottleneck = DilationBottleneck(in_channels[-1], channel, scales)
+        self.dilation_bottleneck = ConvModule(in_channels[-1], channel, 3, 1, 1)
 
         self.feature_in = nn.ModuleList()
         self.feature_out = nn.ModuleList()
@@ -64,19 +65,19 @@ class DilationHead(nn.Module):
         self.dropout = nn.Dropout2d(0.1)
         self.conv_seg = nn.Conv2d(channel, 1, 1)
 
-    def forward(self, features: Tuple[Tensor, Tensor, Tensor, Tensor]) -> Tensor:
-        f = self.bottleneck(features[-1])
+    def forward(self, features_in: Tuple[Tensor, Tensor, Tensor, Tensor]) -> Tensor:
+        f = self.dilation_bottleneck(features_in[-1])
         features = [f]
 
-        for i in reversed(range(len(features) - 1)):
-            feature = self.feature_in[i](features[i])
+        for i in reversed(range(len(features_in) - 1)):
+            feature = self.feature_in[i](features_in[i])
             f = feature + F.interpolate(
                 f, size=feature.shape[-2:], mode="bilinear", align_corners=False
             )
             features.append(self.feature_out[i](f))
 
         features.reverse()
-        for i in range(1, len(features)):
+        for i in range(1, len(features_in)):
             features[i] = F.interpolate(
                 features[i],
                 size=features[0].shape[-2:],
