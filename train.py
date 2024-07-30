@@ -95,7 +95,7 @@ class Trainer(object):
         )
         # self.lr_scheduler.step()
         # Loss funcitons
-        self.loss_fun = SoftIoUL1NromLoss()
+        self.loss_fun = StructureLoss()
 
         # Metrics
         self.PD_FA = PD_FA(1, 10, args.base_size)
@@ -164,10 +164,10 @@ class Trainer(object):
                 self.PD_FA.update(pred, mask)
                 self.ROC.update(pred, mask)
                 _, mean_IoU = self.mIoU.get()
-                
+
                 precision += precision_m(mask, pred)
                 recall += recall_m(mask, pred)
-                
+
                 tbar.set_description("Epoch %d, IoU %.4f" % (epoch, mean_IoU))
             FA, PD = self.PD_FA.get(len(self.val_loader))
             _, mean_IoU = self.mIoU.get()

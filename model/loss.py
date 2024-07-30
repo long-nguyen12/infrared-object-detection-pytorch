@@ -174,6 +174,7 @@ class SoftIoUL1NromLoss(nn.Module):
 class StructureLoss(nn.Module):
     def __init__(self) -> None:
         super().__init__()
+        self.softiou = SoftLoULoss()
 
     def forward(self, pred, mask):
         weit = 1 + 5 * torch.abs(
@@ -182,11 +183,9 @@ class StructureLoss(nn.Module):
         wbce = F.binary_cross_entropy_with_logits(pred, mask, reduction="none")
         wbce = (weit * wbce).sum(dim=(2, 3)) / weit.sum(dim=(2, 3))
 
-        pred = torch.sigmoid(pred)
-        inter = ((pred * mask) * weit).sum(dim=(2, 3))
-        union = ((pred + mask) * weit).sum(dim=(2, 3))
-        wiou = 1 - (inter + 1) / (union - inter + 1)
-        return (wbce + wiou).mean()
+        iouloss = self.softiou(pred, mask)
+
+        return (wbce + iouloss).mean()
 
 
 class AverageMeter(object):
