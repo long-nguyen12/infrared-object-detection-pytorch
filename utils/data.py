@@ -13,10 +13,10 @@ from glob import glob
 
 
 class IRSTD_Dataset(Data.Dataset):
-    def __init__(self, args, mode="train"):
+    def __init__(self, args, mode="train", dataset=None):
 
         dataset_dir = args.train_path
-
+        self.dataset = dataset
         if mode == "train":
             txtfile = "trainval.txt"
         elif mode == "val":
@@ -42,8 +42,13 @@ class IRSTD_Dataset(Data.Dataset):
 
     def __getitem__(self, i):
         name = self.names[i]
+        if self.dataset == "SIRST":
+            mask_name = "_pixels0.png"
+        else:
+            mask_name = ".png"
+
         img_path = osp.join(self.imgs_dir, name + ".png")
-        label_path = osp.join(self.label_dir, name + ".png")
+        label_path = osp.join(self.label_dir, name + mask_name)
 
         img = Image.open(img_path).convert("RGB")
         mask = Image.open(label_path)
@@ -123,7 +128,7 @@ class SIRST_Dataset(Data.Dataset):
 
         self.names = glob("{}/*".format(self.imgs_dir))
         self.mask_names = glob("{}/*".format(self.label_dir))
-        
+
         self.names.sort()
         self.mask_names.sort()
 

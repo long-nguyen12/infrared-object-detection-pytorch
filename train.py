@@ -63,8 +63,8 @@ class Trainer(object):
         else:
             print("Save path existed")
 
-        trainset = IRSTD_Dataset(args, mode="train")
-        valset = IRSTD_Dataset(args, mode="val")
+        trainset = IRSTD_Dataset(args, mode="train", dataset=dataset)
+        valset = IRSTD_Dataset(args, mode="val", dataset=dataset)
 
         self.train_loader = Data.DataLoader(
             trainset, args.batch_size, shuffle=True, drop_last=True
