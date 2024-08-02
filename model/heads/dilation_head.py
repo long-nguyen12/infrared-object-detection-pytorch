@@ -38,10 +38,11 @@ class ResBlock(nn.Module):
             residual = self.shortcut(x)
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        # out = self.relu(out)
+        out += residual
+        
         out = self.conv2(out)
         out = self.bn2(out)
-
         out += residual
         out = self.relu(out)
         return out
@@ -52,8 +53,8 @@ class DilationHead(nn.Module):
         super().__init__()
         # DilationBottleneck Module
         self.dilation_bottleneck = DilationBottleneck(in_channels[-1], channel, scales)
-        # self.dilation_bottleneck = ConvModule(in_channels[-1], channel, 3, 1, 1)
-
+        # self.dilation_bottleneck = ConvModule(in_channels[-1], channel, 3)
+        
         self.feature_in = nn.ModuleList()
         self.feature_out = nn.ModuleList()
 

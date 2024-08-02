@@ -106,7 +106,7 @@ class Trainer(object):
 
         if args.mode == "test":
             weight = torch.load(f"{self.save_folder}/best.pth")
-            self.model.load_state_dict(weight, strict=False)
+            self.model.load_state_dict(weight, strict=True)
             self.warm_epoch = -1
 
     def train(self, epoch):
