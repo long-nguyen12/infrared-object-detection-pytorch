@@ -1,8 +1,7 @@
-import torch.nn as nn
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-from skimage import measure
 
 
 class SoftLoULoss(nn.Module):
@@ -27,24 +26,6 @@ class SoftLoULoss(nn.Module):
         return loss
 
 
-class SoftIoUL1NromLoss(nn.Module):
-    def __init__(self, lambda_iou=0.8, lambda_l1=0.2):
-        super(SoftIoUL1NromLoss, self).__init__()
-        self.softiou = SoftLoULoss()
-        self.lambda_iou = lambda_iou
-        self.lambda_l1 = lambda_l1
-
-    def forward(self, pred, target):
-        iouloss = self.softiou(pred, target)
-
-        batch_size, C, height, width = pred.size()
-        pred = (pred > 0).float()
-        l1loss = torch.sum(pred) / (batch_size * C * height * width)
-
-        loss = self.lambda_iou * iouloss + self.lambda_l1 * l1loss
-        return loss
-
-
 class StructureLoss(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -59,8 +40,7 @@ class StructureLoss(nn.Module):
 
         iouloss = self.softiou(pred, mask)
 
-        return wbce.mean()
-        # return iouloss + wbce.mean()
+        return iouloss + wbce.mean()
 
 
 class AverageMeter(object):

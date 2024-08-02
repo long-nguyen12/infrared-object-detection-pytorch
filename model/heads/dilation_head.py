@@ -53,7 +53,6 @@ class DilationHead(nn.Module):
         super().__init__()
         # DilationBottleneck Module
         self.dilation_bottleneck = DilationBottleneck(in_channels[-1], channel, scales)
-        # self.dilation_bottleneck = ConvModule(in_channels[-1], channel, 3)
         
         self.feature_in = nn.ModuleList()
         self.feature_out = nn.ModuleList()
