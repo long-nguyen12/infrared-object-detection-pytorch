@@ -30,23 +30,6 @@ def parse_args():
     return args
 
 
-epsilon = 1e-7
-
-
-def recall_m(y_true, y_pred):
-    true_positives = torch.sum(torch.round(torch.clip(y_true * y_pred, 0, 1)))
-    possible_positives = torch.sum(torch.round(torch.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + epsilon)
-    return recall
-
-
-def precision_m(y_true, y_pred):
-    true_positives = torch.sum(torch.round(torch.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = torch.sum(torch.round(torch.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + epsilon)
-    return precision
-
-
 class Trainer(object):
     def __init__(self, args):
         assert args.mode == "train" or args.mode == "test"
@@ -147,8 +130,7 @@ class Trainer(object):
         self.PD_FA.reset()
         tbar = tqdm(self.val_loader)
         tag = False
-        recall = 0
-        precision = 0
+
         with torch.no_grad():
             for i, (data, mask) in enumerate(tbar):
 
@@ -165,14 +147,9 @@ class Trainer(object):
                 self.ROC.update(pred, mask)
                 _, mean_IoU = self.mIoU.get()
 
-                precision += precision_m(mask, pred)
-                recall += recall_m(mask, pred)
-
                 tbar.set_description("Epoch %d, IoU %.4f" % (epoch, mean_IoU))
             FA, PD = self.PD_FA.get(len(self.val_loader))
             _, mean_IoU = self.mIoU.get()
-            recall = recall / len(self.val_loader)
-            precision = precision / len(self.val_loader)
 
             if self.mode == "train":
                 if mean_IoU > self.best_iou:
@@ -203,8 +180,6 @@ class Trainer(object):
                 print("mIoU: " + str(mean_IoU) + "\n")
                 print("Pd: " + str(PD[0]) + "\n")
                 print("Fa: " + str(FA[0] * 1000000) + "\n")
-                print("Recall: " + str(recall) + "\n")
-                print("Precision: " + str(precision) + "\n")
 
 
 if __name__ == "__main__":
