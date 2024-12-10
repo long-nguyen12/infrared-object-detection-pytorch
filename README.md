@@ -1,4 +1,4 @@
-# Enhancing Infrared Small Target Detection: A Multi-Scale Feature Integration Approach with an Optimized Combined Loss Function
+# Enhancing Infrared Small Target Detection: A Multi-Scale Feature Integration Approach with an Optimized Combined Loss Function [![DOI](https://zenodo.org/badge/826742719.svg)](https://doi.org/10.5281/zenodo.14364511)
 
 This repository contains the official Pytorch implementation of training & evaluation code.
 
