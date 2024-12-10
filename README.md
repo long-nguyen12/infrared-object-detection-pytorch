@@ -1,4 +1,4 @@
-# Enhancing Infrared Small Object Detection
+# Enhancing Infrared Small Target Detection: A Multi-Scale Feature Integration Approach with an Optimized Combined Loss Function
 
 This repository contains the official Pytorch implementation of training & evaluation code.
 
